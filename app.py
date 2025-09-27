@@ -1,28 +1,33 @@
 from flask import Flask, render_template, request, jsonify
+import openai
+import os
 
 app = Flask(__name__)
+
+# Load OpenAI API key from environment variables
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 @app.route("/get", methods=["POST"])
-def chat():
-    user_msg = request.json["msg"].lower()
+def get_bot_response():
+    user_message = request.json.get("message")
 
-    # Simple rule-based replies
-    if "hello" in user_msg or "hi" in user_msg:
-        reply = "Hey there! 👋 Ready for your workout?"
-    elif "workout" in user_msg:
-        reply = "I can suggest Push-Pull-Legs, Full Body, or Cardio. 💪 Which one do you want?"
-    elif "diet" in user_msg:
-        reply = "For muscle gain: eat high protein 🥩🍳. For fat loss: focus on calorie deficit 🥗."
-    elif "help" in user_msg:
-        reply = "You can ask me about workouts, diet, or motivation! 🔥"
-    else:
-        reply = "I’m still learning 🤖. Try asking me about workouts, diet, or help."
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Free/cheap and good
+            messages=[
+                {"role": "system", "content": "You are a helpful Gym Assistant who gives workout, diet, and motivation advice in a friendly way."},
+                {"role": "user", "content": user_message}
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
 
-    return jsonify({"reply": reply})
+        bot_reply = response['choices'][0]['message']['content'].strip()
+        return jsonify({"reply": bot_reply})
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    except Exception as e:
+        return jsonify({"reply": f"⚠️ Error: {str(e)}"})
