@@ -1,122 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>💪 Gym Assistant</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f1f3f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .chat-container {
-            width: 400px;
-            height: 600px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .chat-header {
-            background: #2e86de;
-            color: white;
-            text-align: center;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .chat-box {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        .user-msg, .bot-msg {
-            max-width: 75%;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 12px;
-            line-height: 1.4;
-        }
-        .user-msg {
-            align-self: flex-end;
-            background: #2e86de;
-            color: white;
-            border-bottom-right-radius: 0;
-        }
-        .bot-msg {
-            align-self: flex-start;
-            background: #d1f7c4;
-            color: #2d3436;
-            border-bottom-left-radius: 0;
-        }
-        .input-area {
-            display: flex;
-            border-top: 1px solid #ccc;
-        }
-        .input-area input {
-            flex: 1;
-            border: none;
-            padding: 12px;
-            font-size: 16px;
-        }
-        .input-area button {
-            border: none;
-            background: #2e86de;
-            color: white;
-            padding: 0 20px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Gym Assistant Bot</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #chatbox { width: 100%; height: 300px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; }
+    .user { color: blue; }
+    .bot { color: green; }
+  </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">💪 Gym Assistant</div>
-        <div id="chat-box" class="chat-box"></div>
-        <div class="input-area">
-            <input type="text" id="user_input" placeholder="Type a message...">
-            <button onclick="sendMessage()">Send</button>
-        </div>
-    </div>
+  <h1>Gym Assistant Bot</h1>
+  <div id="chatbox"></div>
+  <input type="text" id="userInput" placeholder="Type your message..." />
+  <button onclick="sendMessage()">Send</button>
 
-    <script>
-        async function sendMessage() {
-            let user_input = document.getElementById("user_input").value;
-            if (!user_input) return;
+  <script>
+    async function sendMessage() {
+      const userMessage = document.getElementById("userInput").value;
+      if (!userMessage) return;
 
-            let chatBox = document.getElementById("chat-box");
+      const chatbox = document.getElementById("chatbox");
+      chatbox.innerHTML += `<div class="user"><b>You:</b> ${userMessage}</div>`;
 
-            // Add user message
-            let userMsg = document.createElement("div");
-            userMsg.className = "user-msg";
-            userMsg.textContent = user_input;
-            chatBox.appendChild(userMsg);
+      const response = await fetch("/get", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage })
+      });
 
-            document.getElementById("user_input").value = "";
-
-            // Send to backend
-            let response = await fetch("/get", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ msg: user_input })
-            });
-            let data = await response.json();
-
-            // Add bot reply
-            let botMsg = document.createElement("div");
-            botMsg.className = "bot-msg";
-            botMsg.textContent = data.reply;
-            chatBox.appendChild(botMsg);
-
-            // Scroll to bottom
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
+      const data = await response.json();
+      chatbox.innerHTML += `<div class="bot"><b>Bot:</b> ${data.response}</div>`;
+      document.getElementById("userInput").value = "";
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+  </script>
 </body>
 </html>
