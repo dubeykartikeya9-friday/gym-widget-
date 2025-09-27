@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-# Load OpenAI API key from environment variables
+# Load API key from Render environment
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/")
@@ -17,12 +17,12 @@ def get_bot_response():
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Free/cheap and good
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a helpful Gym Assistant who gives workout, diet, and motivation advice in a friendly way."},
+                {"role": "system", "content": "You are a helpful Gym Assistant who gives workout, diet, recovery, and motivation advice in a simple and friendly way. Keep answers short and actionable."},
                 {"role": "user", "content": user_message}
             ],
-            max_tokens=150,
+            max_tokens=200,
             temperature=0.7
         )
 
@@ -31,3 +31,6 @@ def get_bot_response():
 
     except Exception as e:
         return jsonify({"reply": f"⚠️ Error: {str(e)}"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
