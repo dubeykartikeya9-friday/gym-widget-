@@ -1,44 +1,40 @@
-import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
+import os
 
 app = Flask(__name__)
 
-# Load API key from Render environment variable
+# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def chat_with_ai(user_input):
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/chat", methods=["POST"])
+def chat():
     try:
+        user_message = request.json.get("message")
+
+        if not user_message:
+            return jsonify({"error": "No message provided"}), 400
+
+        # Call OpenAI API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo",   # ✅ Change to gpt-4o-mini if needed
             messages=[
-                {"role": "system", "content": "You are a helpful gym assistant."},
-                {"role": "user", "content": user_input}
+                {"role": "system", "content": "You are a helpful AI assistant."},
+                {"role": "user", "content": user_message}
             ],
             max_tokens=200
         )
-        return response.choices[0].message.content.strip()
+
+        ai_message = response.choices[0].message.content.strip()
+        return jsonify({"reply": ai_message})
+
     except Exception as e:
-        return f"⚠️ Sorry, I couldn’t reach the AI service. Error: {str(e)}"
+        return jsonify({"error": str(e)}), 500
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/get", methods=["POST"])
-def get_response():
-    data = request.get_json()
-    user_input = data.get("message")
-    reply = chat_with_ai(user_input)
-    return jsonify({"response": reply})
-
-@app.route("/health")
-def health():
-    return jsonify({
-        "status": "ok",
-        "openai_api_key_set": bool(os.getenv("OPENAI_API_KEY")),
-        "using_openai": True
-    })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
