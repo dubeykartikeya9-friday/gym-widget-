@@ -1,53 +1,29 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, jsonify
 import os
-import requests
 
 app = Flask(__name__)
 
-# Home route → loads chatbot UI
+# Load environment variables (future ready)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")   # for AI responses
+DATABASE_URL = os.getenv("DATABASE_URL")       # for saving leads/bookings
+EMAIL_API_KEY = os.getenv("EMAIL_API_KEY")     # for email notifications
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Chatbot endpoint
-@app.route("/api/chat", methods=["POST"])
+@app.route("/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
-    user_message = data.get("message", "")
+    user_message = request.json.get("message")
 
-    # Simple bot logic (replace with OpenAI API later)
-    if "plan" in user_message.lower():
-        bot_response = "We offer monthly, quarterly, and yearly gym plans. Would you like details?"
-    elif "trainer" in user_message.lower():
-        bot_response = "We have certified trainers available. Do you want to book a free session?"
+    # Simple placeholder response (replace with AI later)
+    if user_message:
+        response = f"Hello! You said: {user_message}. (Gym bot here 💪)"
     else:
-        bot_response = "Welcome to our Gym! 💪 Ask me about memberships, trainers, or book a trial session."
+        response = "Hi! I'm your Gym Assistant. Ask me about plans, trainers, or bookings."
 
-    return jsonify({"reply": bot_response})
-
-# Booking endpoint
-@app.route("/api/book", methods=["POST"])
-def book():
-    data = request.get_json()
-    name = data.get("name")
-    phone = data.get("phone")
-
-    # Forward booking to Google Apps Script (if set)
-    webhook_url = os.getenv("SHEET_WEBHOOK_URL")
-    secret = os.getenv("SHEET_SECRET")
-
-    if webhook_url and secret:
-        try:
-            requests.post(webhook_url, json={
-                "name": name,
-                "phone": phone,
-                "secret": secret
-            })
-        except:
-            pass  # Ignore failures
-
-    return jsonify({"status": "success", "message": f"Booking received for {name} 📅"})
-
+    return jsonify({"reply": response})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))  # Render needs this
+    app.run(host="0.0.0.0", port=port)
